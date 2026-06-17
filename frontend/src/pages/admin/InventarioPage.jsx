@@ -3,7 +3,17 @@ import Navbar from '../../components/Navbar'
 import { inventarioApi } from '../../api/apiClient'
 
 const FORM_VACIO = { productoId: '', nombre: '', stock: '' }
-const UMBRAL_STOCK_BAJO = 20
+
+// Semáforo de stock: 🔴 bajo (<20) · 🟡 medio (20–49) · 🟢 bien (≥50)
+const UMBRAL_ROJO  = 20
+const UMBRAL_VERDE = 50
+
+function semaforoStock(stock) {
+  const s = stock ?? 0
+  if (s < UMBRAL_ROJO)  return { emoji: '🔴', label: 'Bajo',  badge: 'badge-red',   key: 'rojo' }
+  if (s < UMBRAL_VERDE) return { emoji: '🟡', label: 'Medio', badge: 'badge-gold',  key: 'amarillo' }
+  return                       { emoji: '🟢', label: 'Bien',  badge: 'badge-green', key: 'verde' }
+}
 
 export default function InventarioPage() {
   const [items, setItems]       = useState([])
@@ -26,11 +36,15 @@ export default function InventarioPage() {
     finally { setLoading(false) }
   }
 
-  const stats = useMemo(() => ({
-    productos:  items.length,
-    unidades:   items.reduce((acc, i) => acc + (i.stock || 0), 0),
-    stockBajo:  items.filter(i => (i.stock || 0) <= UMBRAL_STOCK_BAJO).length,
-  }), [items])
+  const stats = useMemo(() => {
+    const conteo = { verde: 0, amarillo: 0, rojo: 0 }
+    items.forEach(i => { conteo[semaforoStock(i.stock).key]++ })
+    return {
+      productos: items.length,
+      unidades:  items.reduce((acc, i) => acc + (i.stock || 0), 0),
+      ...conteo,
+    }
+  }, [items])
 
   const abrirCrear = () => {
     setEditandoId(null)
@@ -119,11 +133,23 @@ export default function InventarioPage() {
             <div className="stat-label">Unidades en stock</div>
           </div>
           <div className="stat-card">
-            <div className="stat-value" style={{ color: stats.stockBajo ? 'var(--danger, #C0392B)' : undefined }}>
-              {stats.stockBajo}
+            <div className="stat-value" style={{ fontSize: '1.4rem' }}>
+              🟢 {stats.verde} · 🟡 {stats.amarillo} · 🔴 {stats.rojo}
             </div>
-            <div className="stat-label">Con stock bajo (≤ {UMBRAL_STOCK_BAJO})</div>
+            <div className="stat-label">Semáforo de stock</div>
           </div>
+        </div>
+
+        {/* Leyenda del semáforo */}
+        <div style={{
+          display:'flex', gap:'1.25rem', flexWrap:'wrap', alignItems:'center',
+          background:'#F8F9FA', border:'1px solid var(--border)', borderRadius:8,
+          padding:'.5rem .9rem', marginBottom:'1.5rem', fontSize:'.85rem',
+        }}>
+          <strong style={{ color:'var(--text-lt)' }}>Semáforo de stock:</strong>
+          <span>🟢 Bien (≥ {UMBRAL_VERDE})</span>
+          <span>🟡 Medio ({UMBRAL_ROJO}–{UMBRAL_VERDE - 1})</span>
+          <span>🔴 Bajo (&lt; {UMBRAL_ROJO})</span>
         </div>
 
         {/* Formulario */}
@@ -186,19 +212,22 @@ export default function InventarioPage() {
               <table>
                 <thead>
                   <tr>
-                    <th>ID</th><th>Producto ID</th><th>Nombre</th><th>Stock</th><th>Acciones</th>
+                    <th>ID</th><th>Producto ID</th><th>Nombre</th><th>Stock</th><th>Semáforo</th><th>Acciones</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {items.map(i => (
+                  {items.map(i => {
+                    const sem = semaforoStock(i.stock)
+                    return (
                     <tr key={i.id}>
                       <td><span className="badge badge-blue">{i.id}</span></td>
                       <td><span className="badge badge-gold">{i.productoId}</span></td>
                       <td><strong>{i.nombre}</strong></td>
                       <td>
-                        <span className={`badge ${(i.stock || 0) <= UMBRAL_STOCK_BAJO ? 'badge-red' : 'badge-green'}`}>
-                          {i.stock}
-                        </span>
+                        <span className={`badge ${sem.badge}`}>{i.stock}</span>
+                      </td>
+                      <td>
+                        <span className={`badge ${sem.badge}`}>{sem.emoji} {sem.label}</span>
                       </td>
                       <td>
                         <div style={{ display:'flex', gap:'.4rem' }}>
@@ -209,7 +238,8 @@ export default function InventarioPage() {
                         </div>
                       </td>
                     </tr>
-                  ))}
+                    )
+                  })}
                 </tbody>
               </table>
             </div>

@@ -5,6 +5,7 @@ import com.cordillera.MS_reportes.dto.KpiDto;
 import com.cordillera.MS_reportes.dto.ReporteDto;
 import com.cordillera.MS_reportes.factory.ReporteContenido;
 import com.cordillera.MS_reportes.factory.TipoReporte;
+import com.cordillera.MS_reportes.util.RangoKpi;
 
 import java.util.List;
 
@@ -22,12 +23,13 @@ public class ReporteResumenContenido implements ReporteContenido {
         sb.append("Total de KPIs calculados:  ").append(kpis.size()).append("\n\n");
 
         if (!kpis.isEmpty()) {
-            sb.append("Principales indicadores:\n");
+            sb.append("Principales indicadores (rango PROMEDIO/SUMA: 🟢 ÓPTIMO · 🟡 REGULAR · 🔴 MALO):\n");
             kpis.stream().limit(5).forEach(k ->
-                    sb.append(String.format("  • %s: %s %s\n",
+                    sb.append(String.format("  • %s: %s %s%s\n",
                             k.getNombre(),
                             k.getValor() != null ? k.getValor().toPlainString() : "N/A",
-                            k.getUnidad() != null ? k.getUnidad() : ""))
+                            k.getUnidad() != null ? k.getUnidad() : "",
+                            RangoKpi.etiquetaPara(k)))
             );
         }
 

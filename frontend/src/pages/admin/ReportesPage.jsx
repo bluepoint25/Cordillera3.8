@@ -266,6 +266,18 @@ export default function ReportesPage() {
                   <span className="badge badge-green">{selected.periodo}</span>
                   <span className="badge badge-gold">{selected.estado}</span>
                 </div>
+
+                {/* Leyenda del rango de KPIs (PROMEDIO / SUMA) */}
+                <div style={{
+                  display:'flex', gap:'1rem', flexWrap:'wrap', alignItems:'center',
+                  background:'#F8F9FA', border:'1px solid var(--border)', borderRadius:8,
+                  padding:'.5rem .75rem', marginBottom:'.75rem', fontSize:'.8rem',
+                }}>
+                  <strong style={{ color:'var(--text-lt)' }}>Rango KPI (promedio/suma):</strong>
+                  <span>🟢 Óptimo</span>
+                  <span>🟡 Regular</span>
+                  <span>🔴 Malo</span>
+                </div>
                 <pre style={{
                   background:'#F8F9FA', borderRadius:8, padding:'1rem',
                   fontFamily:'monospace', fontSize:'.82rem', whiteSpace:'pre-wrap',
